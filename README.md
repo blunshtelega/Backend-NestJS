@@ -25,15 +25,19 @@
 
 Весь проект упакован в docker образ, поэтому нужно предварительно сделать пару вещей:
 
+Но сперва, один важный момент 
+
+<ins>**Опции "строгости" в<ins> `tsconfig.json` <ins>ВКЛЮЧЕНЫ, учитывайте это!**<ins>
+
+Поэтому нужно комментировать строки с подключением в конструкторе/импорта, чтобы не было ошибок при сборке!
+
 `.env.example` практически заполнен, осталась всего пара полей
 
 - `EMAIL_SERVICE=`
 - `EMAIL_USER=`
 - `EMAIL_PASSWORD=`
 
-Если нет необходимости тестировать отправку писем при регистрации, можете закомментировать строку с `sendVerificationLink` в `src/authentication/authentication.controller.ts`
-
-При создание БД поле `host name/address` заполняется IP адресом, который можно получить командами `docker ps` -> `docker inspect [POSTGRES CONTAINER ID]`
+Если нет необходимости тестировать отправку писем при регистрации, можете закомментировать строку с `sendVerificationLink` в `src/authentication/authentication.controller.ts`, а также (<ins>из за выкрученного ts.config<ins>) подключение в конструкторе и импорт
 
 Логи пишутся в SENTRY, поэтому нужно или прописать свой DSN, или отключить его в `src/app.module.ts`
 
@@ -54,9 +58,11 @@
     }
     }
 
-<ins>**Опции "строгости" в<ins> `tsconfig.json` <ins>ВКЛЮЧЕНЫ, учитывайте это!**<ins>
-
 <h2>Запуск и тестирование</h2>
+
+Запуск:
+- `docker compose build`
+- `docker compose up -d` (нужно подождать пару минут пока соберется elastic)
 
 Структура проекта:
 - `npm run documentation:serve` - посмотреть документацию Сompodoc до/после сборки
@@ -65,10 +71,6 @@
 Тесты:
 - `npm run test` 
 - `npm run test:e2e`
-
-Запуск:
-- `docker compose build`
-- `docker compose up -d`
 
 <h2>TODO LIST</h2>
 
