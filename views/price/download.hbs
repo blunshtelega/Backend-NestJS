@@ -1,0 +1,39 @@
+<form method="post" action="/prices/upload" enctype="multipart/form-data">
+
+  <div class="mb-3">
+    <label for="titleInput" class="form-label">Описание</label>
+    <textarea class="form-control" name="title" id="title" rows="3"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="cover">Обложка новости</label>
+    <input type="file" class="form-control-file" id="file" name="file">
+  </div>
+
+  <button type="button" class="btn btn-primary" onclick='downloadPrice()'>Создать</button>
+
+</form>
+
+<script>
+    function downloadPrice() {
+    var data = new FormData($('form')[0]);
+    console.log(data);
+    $.ajax({
+      url: '/prices/upload',
+      data: data,
+      cache: false,
+      contentType: false,
+      processData: false,
+      method: 'POST',
+      success: function(response) {
+        console.log(response);
+        window.location.href = '/products/convert';
+      },
+      error: function(error, req, a){
+        console.log(error);
+        console.log(req.fileValidationError);
+        console.log(a);
+      }
+    });
+  }
+</script>

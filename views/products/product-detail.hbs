@@ -1,0 +1,74 @@
+{{#if product}}
+  <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
+    <div class="col-lg-6">
+      <h1 class="display-5 fw-bold lh-1 mb-3" id="productCode">Артикул: {{product.productCode}}</h1>
+      <p class="text-muted">Название: {{product.title}}</p>
+      <p class="text-muted">Цена: {{product.productPrice}}</p>
+    </div>
+  </div>
+  <button class="w-100 btn btn-lg btn-primary" onclick="sendForm()">Добавить в корзину</button>
+{{else}}
+  <h1>Товар не найден!</h1>
+{{/if}}
+
+<script>
+  function sendForm() {
+    const pathname = document.location.pathname;
+    console.log(qq);
+    const itemIdFromPathName = pathname.slice(10);
+    console.log(itemIdFromPathName);
+    axios({
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      data: {id: itemIdFromPathName},
+      url: '/products/add-to-storage',
+    }).then((response) => {
+      let basket = JSON.parse(localStorage.getItem('basket'));
+      let elementId = response.data.productCode.toString();                                // element._id is a part of backend data received from JSON file
+      let elementName = response.data.title;                             // element.name is a part of backend data received from JSON file
+      let elementPrice = response.data.productPrice;                           // element.price is a part of backend data received from JSON file
+      let elementQuantity = 1;
+      console.log(elementId, elementName, elementPrice)
+      if (!basket) {
+        basket = [];
+      }
+      console.log(basket);
+      // find the index of the item if already in basket
+
+      const itemIndexInBasket = basket.findIndex(x => x.elementId === '420')
+      console.log(itemIndexInBasket); 
+      if (itemIndexInBasket !== -1) {
+        console.log('Увеличиваем')
+        basket[itemIndexInBasket].elementQuantity++;
+      } else {
+        console.log('Пушим товар')
+        basket.push({elementId, elementName, elementPrice, elementQuantity});    // Push not existing data to localstorage
+      } 
+      localStorage.setItem('basket', JSON.stringify(basket));
+    })
+        .catch((error) => {
+        if (error.response) {
+                /*
+                * The request was made and the server responded with a
+                * status code that falls out of the range of 2xx
+                */
+                console.log(error.response.data);
+                console.log(error.response.status);
+                console.log(error.response.headers);
+            } else if (error.request) {
+                /*
+                * The request was made but no response was received, `error.request`
+                * is an instance of XMLHttpRequest in the browser and an instance
+                * of http.ClientRequest in Node.js
+                */
+                console.log(error.request);
+            } else {
+                // Something happened in setting up the request and triggered an Error
+                console.log('Error', error.message);
+            }
+            console.log(error.config);
+    })
+  }
+</script>
