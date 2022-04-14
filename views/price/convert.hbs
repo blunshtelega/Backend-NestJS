@@ -1,0 +1,30 @@
+<main class="form-signin">
+  <div>
+    <h1 class="h3 mb-3 fw-normal">Convert</h1>
+
+    <div class="form-floating">
+      <input type="email" class="form-control" id="id" name="id">
+      <label for="id">id</label>
+    </div>
+
+    <button class="w-100 btn btn-lg btn-primary" onclick="covertPrice()">Convert</button>
+    <p class="mt-5 mb-3 text-muted">&copy; 2017–2022</p>
+  </div>
+</main>
+
+<script>
+  function covertPrice() {
+    const idValue = document.getElementById('id').value;
+    axios({
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      data: {id: idValue},
+      url: '/products/create-goods-from-price',
+    }).then((response) => {
+        alert('Успех');
+        window.location.href = '/products/show-all';
+    })
+  }
+</script>

@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "es2017",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": false,
+    // Опции строгости
+    "alwaysStrict": true, // "use strict"
+    "noImplicitAny": true, // Флаг noImplicitAny запрещает использовать в коде переменные, типы которых неявно определяются как any
+    "strictNullChecks": true, // Активированный флаг strictNullChecks делает невозможным использование undefined и null вместо других типов
+    "strictPropertyInitialization": true, // следит за тем, чтобы свойства, объявленные в классе были проинициализированы во время их объявления или в конструкторе
+    "strictFunctionTypes": true, // включает более строгий контроль сигнатур функций
+    "strictBindCallApply": true, // Включает более строгую проверку сигнатур при использовании соответствующих методов: bind, call, apply
+    "noImplicitThis": true, // При использовании this проверяет, что контекст выполнения известен
+    "useUnknownInCatchVariables": true,
+    // Дополнительные опции строгости
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true, // Флаг проверяет, чтобы все ветки функции возвращали значение
+    "noFallthroughCasesInSwitch": true, // Флаг проверяет наличие break в операторе switch/case
+    "noUnusedLocals": true, // Код проверяется на наличие неиспользуемых переменных
+    "noUnusedParameters": true, // Код проверяется на наличие неиспользуемых аргументов функций и методов
+  }
+}

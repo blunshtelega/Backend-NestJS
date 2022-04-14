@@ -1,0 +1,29 @@
+  <div class="intro">
+    <h1>Для удобного заказа через сайт ВОЙДИТЕ В СИСТЕМУ или пройдите РЕГИСТРАЦИЮ</h1>
+  </div>
+{{#if items}}
+  <div class="row">
+    {{#each items}}
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Артикул 1С: {{this.productCode}}</h5>
+            <h6 class="card-subtitle mb-2 text-muted">Название: {{this.title}}</h6>
+            <p class="card-text">Цена: {{this.productPrice}} р.</p>
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <h1>Список товаров 1пуст!</h1>
+{{/if}}
+
+<style>
+  .card-body{
+    width: 50%;
+    margin: 10px auto;
+    border: 1px solid black;
+    box-sizing: border-box;
+  }
+</style>

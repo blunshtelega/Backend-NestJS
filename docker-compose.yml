@@ -1,0 +1,266 @@
+version: "3.7"
+services:
+  postgres:
+    image: postgres:latest
+    init: true
+    container_name: postgres-db
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: "${POSTGRES_DB}"
+      PG_DATA: /var/lib/postgresql/data
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - backend
+    # command:
+    #   - "postgres"
+    #   - "-c"
+    #   - "max_connections=50"
+    #   - "-c"
+    #   - "shared_buffers=1GB"
+    #   - "-c"
+    #   - "effective_cache_size=4GB"
+    #   - "-c"
+    #   - "work_mem=16MB"
+    #   - "-c"
+    #   - "maintenance_work_mem=512MB"
+    #   - "-c"
+    #   - "random_page_cost=1.1"
+    #   - "-c"
+    #   - "temp_file_limit=10GB"
+    #   - "-c"
+    #   - "log_min_duration_statement=200ms"
+    #   - "-c"
+    #   - "idle_in_transaction_session_timeout=10s"
+    #   - "-c"
+    #   - "lock_timeout=1s"
+    #   - "-c"
+    #   - "statement_timeout=60s"
+    #   - "-c"
+    #   - "shared_preload_libraries=pg_stat_statements"
+    #   - "-c"
+    #   - "pg_stat_statements.max=10000"
+    #   - "-c"
+    #   - "pg_stat_statements.track=all"
+  pgadmin:
+    image: dpage/pgadmin4
+    init: true
+    container_name: pgadmin
+    links:
+      - postgres:postgres
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    env_file:
+      - .env
+    networks:
+      - backend
+    depends_on: [postgres]
+    restart: always
+ 
+  api:
+    container_name: "api_${NODE_ENV}"
+    image: "api_${NODE_ENV}"
+    environment:
+      - NODE_ENV:${NODE_ENV}
+    build:
+      context: .
+      target: "${NODE_ENV}"
+      dockerfile: ./Dockerfile
+    entrypoint: ["npm", "run", "start:${NODE_ENV}"]
+    env_file:
+      - .env
+    ports:
+      - 3000:3000
+    depends_on: 
+      - postgres
+      - redis
+    restart: always
+    networks:
+      - redis
+      - backend
+      - elk
+    volumes:
+      - app:/src/app
+      - app_node:/src/app/node_modules
+    links:
+      - postgres:postgres
+      - elk
+
+  redis:
+    container_name: redis
+    image: redis:alpine
+    networks:
+      - redis
+      - elk
+    volumes:
+      - redis_data:/data
+      - redis-config:/usr/local/etc/redis/redis.conf
+    ports:
+    - ${REDIS_PORT}:6379
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-commander
+    environment:
+      REDIS_HOSTS: redis
+      REDIS_HOST: redis
+      REDIS_PORT: redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      HTTP_USER: root
+      HTTP_PASSWORD: root
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - redis
+      - elk
+    restart: always
+
+  # The 'setup' service runs a one-off script which initializes the
+  # 'logstash_internal' and 'kibana_system' users inside Elasticsearch with the
+  # values of the passwords defined in the '.env' file.
+  #
+  # This task is only performed during the *initial* startup of the stack. On all
+  # subsequent runs, the service simply returns immediately, without performing
+  # any modification to existing users.
+  setup:
+    build:
+      context: setup/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    init: true
+    container_name: setup-for-elastic-stack
+    volumes:
+      - setup:/state:Z
+    environment:
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+    networks:
+      - elk
+
+  elasticsearch:
+    build:
+      context: elasticsearch/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    container_name: elasticsearch
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,z
+      - elasticsearch:/usr/share/elasticsearch/data:z
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: -Xmx256m -Xms256m
+      # Bootstrap password.
+      # Used to initialize the keystore during the initial startup of
+      # Elasticsearch. Ignored on subsequent runs.
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
+      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
+      # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
+      discovery.type: single-node
+    networks:
+      - elk
+
+  logstash:
+    build:
+      context: logstash/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    container_name: logstash    
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro,Z
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro,Z
+    ports:
+      - "5044:5044"
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: -Xmx256m -Xms256m
+      LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    build:
+      context: kibana/
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    container_name: kibana    
+    volumes:
+      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
+    ports:
+      - "5601:5601"
+    environment:
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+  # nginx:
+  #   image: nginx:stable-alpine
+  #   container_name: nginx
+  #   volumes:
+  #     - ./nginx/templates:/etc/nginx/templates
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #   environment:
+  #     - NGINX_PORT=${NGINX_PORT}
+  #     - BACKEND_PORT=${BACKEND_PORT}
+  #   ports:
+  #     - 80:${NGINX_PORT}
+  #   depends_on:
+  #     - api
+  #     - postgres
+  #     - redis
+  #   networks:
+  #     - nesjs-network
+ 
+volumes:
+  # external: false - можно удалить, а если перевести в true, то Docker не будет создавать автоматически папки 
+  postgres:
+      external: false 
+      name: postgres-db-volumes
+  pgadmin-data:
+      external: false
+      name: pgadmin-volumes
+  app:
+      external: false
+      name: app-volumes   
+  app_node:      
+      external: false
+      name: app_node-volumes
+  redis_data:
+      external: false
+      name: redis_data-volumes
+  redis-config:
+      external: false
+      name: redis-config-volumes
+  setup:
+      external: false
+      name: setup-volumes
+  elasticsearch:
+      external: false
+      name: elasticsearch-volumes
+
+ 
+networks:
+  redis:
+    external: false
+    name: redis-network
+  backend:
+    external: false
+    name: backend-network
+  elk:
+    driver: bridge
