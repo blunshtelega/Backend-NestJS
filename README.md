@@ -23,21 +23,27 @@
 
 <h2>Предварительная настройка</h2>
 
-Весь проект упакован в docker образ, поэтому нужно предварительно сделать пару вещей:
+Весь проект упакован в docker образ, поэтому нужно предварительно сделать пару вещей...
 
-Но сперва, один важный момент 
+<ins>Но сперва, один важный момент <ins>
 
-<ins>**Опции "строгости" в<ins> `tsconfig.json` <ins>ВКЛЮЧЕНЫ, учитывайте это!**<ins>
+**Опции "строгости" в `tsconfig.json` ВКЛЮЧЕНЫ, учитывайте это!**
 
-Поэтому нужно комментировать строки с подключением в конструкторе/импорта, чтобы не было ошибок при сборке!
+Не забывайте комментировать подключение импортов / инициализацию в конструкторе для шагов ниже, или отключите все опции в самом `tsconfig.json` чтобы не было ошибок при сборке! 
 
-`.env.example` практически заполнен, осталась всего пара полей
+Итак, поехали!
+
+`.env.example` практически заполнен, осталось видоизменить всего пару полей
 
 - `EMAIL_SERVICE=`
 - `EMAIL_USER=`
 - `EMAIL_PASSWORD=`
 
-Если нет необходимости тестировать отправку писем при регистрации, можете закомментировать строку с `sendVerificationLink` в `src/authentication/authentication.controller.ts`, а также (<ins>из за выкрученного ts.config<ins>) подключение в конструкторе и импорт
+Если нет необходимости тестировать отправку писем при регистрации, можете закомментировать строку с `sendVerificationLink` в `src/authentication/authentication.controller.ts`
+
+    const newUser = await this.authenticationService.registration(userData);
+    await this.emailConfirmationService.sendVerificationLink(userData.email); <- RIGHT HERE
+    return newUser;
 
 Логи пишутся в SENTRY, поэтому нужно или прописать свой DSN, или отключить его в `src/app.module.ts`
 
@@ -65,12 +71,13 @@
 - `docker compose up -d` (нужно подождать пару минут пока соберется elastic)
 
 Структура проекта:
-- `npm run documentation:serve` - посмотреть документацию Сompodoc до/после сборки
-- посмотреть OpenAPI после сборки (`http://localhost:3000/api`)
+- `npm run documentation:serve` - посмотреть документацию Сompodoc
+- посмотреть OpenAPI - `http://localhost:3000/api`
 
 Тесты:
 - `npm run test` 
 - `npm run test:e2e`
+- подергать ручки можно через Postman, т.к. UI практически не реализован 
 
 <h2>TODO LIST</h2>
 

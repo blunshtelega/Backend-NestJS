@@ -1,15 +1,16 @@
-import { Controller, Get, HttpException } from '@nestjs/common';
+import { IRenderTemplate } from './authentication/interfaces/renderAuthTemplate.interface';
+import { Controller, Get, HttpException, Render } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AppService } from './app.service';
 
 @Controller()
 @ApiTags('Тестовая стартовая страница')
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor() {}
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Render('mainpage/mainpage')
+  public async renderIntroPage(): Promise<IRenderTemplate> {
+    return { layout: 'layout', title: 'Hello there!' };
   }
 
   @Get('throw')

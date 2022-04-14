@@ -1,5 +1,4 @@
-import { ManagersController } from './managers/manager.controller';
-import { ManagersService } from './managers/managers.service';
+import { AppController } from './app.controller';
 import { ManagersModule } from './managers/managers.module';
 import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -62,8 +61,7 @@ import * as Sentry from '@sentry/node';
     SearchModule,
     ManagersModule,
   ],
-  providers: [ManagersService],
-  controllers: [ManagersController],
+  controllers: [AppController],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer): void {
